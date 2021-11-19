@@ -13,10 +13,10 @@ class TrieNode:
 class Trie:
      
     def __init__(self):
-        self.root = self.getNode()
+        self.root = TrieNode()
         self.word_sug_list = []
  
-    def getNode(self):
+    def sNode(self):
         return TrieNode()
  
     def _charToIndex(self,ch):
@@ -33,7 +33,7 @@ class Trie:
             index = self._charToIndex(key[level])
  
             if not pCrawl.children[index]:
-                pCrawl.children[index] = self.getNode()
+                pCrawl.children[index] = TrieNode()
             pCrawl = pCrawl.children[index]
         pCrawl.isEndOfWord = True
  
@@ -59,10 +59,12 @@ class Trie:
         return p
     def suggestionsRec(self, node, word):
         if node.isEndOfWord:
-            self.word_list.append(word)
- 
-        for a,n in node.children.items():
-            self.suggestionsRec(n, word + a)
+            self.word_sug_list.append(word)
+        for n in range(26):
+            if node.children[n]!=None:
+                self.suggestionsRec(node.children[n], word+chr(ord('a')+n))
+        # for a,n in node.children.items():
+        #     self.suggestionsRec(n, word + a)
  
     def printAutoSuggestions(self, key):
         node = self.root
@@ -70,12 +72,13 @@ class Trie:
         temp_word = ''
  
         for a in list(key):
-            if not node.children.get(a):
+            index = self._charToIndex(a)
+            if not node.children[index]:
                 not_found = True
                 break
  
             temp_word += a
-            node = node.children[a]
+            node = node.children[index]
  
         if not_found:
             return 0
@@ -114,11 +117,12 @@ def spellcheckHelper(trie,words):
     
 #TODO
 #NOTE: Use post method. GET method cannot handle large texts
-@app.route("/autocomplete")
+@app.route("/autocomplete", methods=["POST"])
 def autocomplete():
     trie = Trie()
     initTrie(trie)
-    data = request.form.to_dict()
+    data = request.json
+    # print(data)
     body = data["body"]
     words = body.split()
     word_auto = words[-1]
@@ -127,7 +131,7 @@ def autocomplete():
         return "No other String found with this prefix"
     elif p == 0:
         return "No String found with this prefix"
-    return jsonify(p)
+    return p
 
 
 #The following route handles the spell check functionality
