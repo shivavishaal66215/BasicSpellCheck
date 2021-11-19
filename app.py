@@ -143,7 +143,7 @@ def spellcheck():
     trie = Trie()
     initTrie(trie)
 
-    data = request.form.to_dict()
+    data = request.json
     body = data["body"]
 
     words = body.split()
