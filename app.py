@@ -2,7 +2,7 @@ from flask import Flask,redirect,url_for,render_template,request,jsonify
 from flask.json import jsonify
 from flask.templating import render_template_string
 from collections import OrderedDict
-
+import random
 app = Flask(__name__)
 
 class TrieNode:
@@ -14,6 +14,7 @@ class Trie:
      
     def __init__(self):
         self.root = self.getNode()
+        self.word_sug_list = []
  
     def getNode(self):
         return TrieNode()
@@ -47,6 +48,43 @@ class Trie:
             pCrawl = pCrawl.children[index]
  
         return pCrawl.isEndOfWord
+    def prefixPointer(self,key):
+        p = self.root
+        length = len(key)
+        for level in range(length):
+            index = self._charToIndex(key[level])
+            if not p.children[index]:
+                return False
+            p = p.children[index]
+        return p
+    def suggestionsRec(self, node, word):
+        if node.isEndOfWord:
+            self.word_list.append(word)
+ 
+        for a,n in node.children.items():
+            self.suggestionsRec(n, word + a)
+ 
+    def printAutoSuggestions(self, key):
+        node = self.root
+        not_found = False
+        temp_word = ''
+ 
+        for a in list(key):
+            if not node.children.get(a):
+                not_found = True
+                break
+ 
+            temp_word += a
+            node = node.children[a]
+ 
+        if not_found:
+            return 0
+        elif node.isEndOfWord and not node.children:
+            return -1
+ 
+        self.suggestionsRec(node, temp_word)
+ 
+        return jsonify(self.word_sug_list)
 
 
 def initTrie(trie):
@@ -78,9 +116,18 @@ def spellcheckHelper(trie,words):
 #NOTE: Use post method. GET method cannot handle large texts
 @app.route("/autocomplete")
 def autocomplete():
+    trie = Trie()
+    initTrie(trie)
     data = request.form.to_dict()
     body = data["body"]
-    return str(body)
+    words = body.split()
+    word_auto = words[-1]
+    p = trie.printAutoSuggestions(word_auto)
+    if(p == -1):
+        return "No other String found with this prefix"
+    elif p == 0:
+        return "No String found with this prefix"
+    return jsonify(p)
 
 
 #The following route handles the spell check functionality
