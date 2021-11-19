@@ -2,43 +2,45 @@ from flask import Flask,redirect,url_for,render_template,request,jsonify
 from flask.json import jsonify
 from flask.templating import render_template_string
 from collections import OrderedDict
-import random
+
 app = Flask(__name__)
 
 class TrieNode:
     def __init__(self):
         self.children = [None]*26
         self.isEndOfWord = False
- 
+
 class Trie:
-     
+
     def __init__(self):
+
         self.root = TrieNode()
         self.word_sug_list = []
  
     def sNode(self):
+
         return TrieNode()
- 
+
     def _charToIndex(self,ch):
-        
-         
+
+
         return ord(ch)-ord('a')
- 
- 
+
+
     def insert(self,key):
-        
+
         pCrawl = self.root
         length = len(key)
         for level in range(length):
             index = self._charToIndex(key[level])
- 
+
             if not pCrawl.children[index]:
                 pCrawl.children[index] = TrieNode()
             pCrawl = pCrawl.children[index]
         pCrawl.isEndOfWord = True
- 
+
     def search(self, key):
-         
+
         pCrawl = self.root
         length = len(key)
         for level in range(length):
@@ -46,8 +48,9 @@ class Trie:
             if not pCrawl.children[index]:
                 return False
             pCrawl = pCrawl.children[index]
- 
+
         return pCrawl.isEndOfWord
+
     def prefixPointer(self,key):
         p = self.root
         length = len(key)
@@ -109,16 +112,17 @@ def spellcheckHelper(trie,words):
     for item in words:
         if(not trie.search(item)):
             result[charCount+1] = item
-        
+
         charCount += len(item) + 1
 
     return OrderedDict(sorted(result.items()))
 
-    
+
 #TODO
 #NOTE: Use post method. GET method cannot handle large texts
 @app.route("/autocomplete", methods=["POST"])
 def autocomplete():
+
     trie = Trie()
     initTrie(trie)
     data = request.json
@@ -134,12 +138,13 @@ def autocomplete():
     return p
 
 
+
 #The following route handles the spell check functionality
 #It takes a paragraph as input and returns:
 #the index and value of mis-spelled words
 @app.route("/spellcheck",methods=["POST"])
 def spellcheck():
-    
+
     trie = Trie()
     initTrie(trie)
 
@@ -152,4 +157,4 @@ def spellcheck():
     return jsonify(errors)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True) 
